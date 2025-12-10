@@ -1,0 +1,541 @@
+\<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THENEBARTRADERER - Ultimate Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- CORE THEME --- */
+        :root {
+            --primary: #8b5cf6; /* Violet */
+            --secondary: #d946ef; /* Magenta */
+            --accent: #06b6d4; /* Cyan */
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-deep: #020617;
+            --glass: rgba(15, 23, 42, 0.75);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-deep);
+            color: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- GALAXY ANIMATION --- */
+        .galaxy-bg {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden;
+        }
+        .star {
+            position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%;
+            animation: twinkle var(--duration) linear infinite; opacity: 0;
+        }
+        @keyframes twinkle {
+            0% { transform: translateY(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100vh); opacity: 0; }
+        }
+
+        /* --- LAYOUT UTILS --- */
+        .btn-glow {
+            width: 100%; padding: 12px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;
+            transition: all 0.3s; text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+        .btn-glow:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(217, 70, 239, 0.6); }
+
+        .token-input {
+            width: 100%; padding: 12px; margin: 20px 0;
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            border-radius: 8px; color: white; text-align: center; outline: none;
+            transition: 0.3s; font-family: 'JetBrains Mono';
+        }
+        .token-input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+
+        /* --- LOGIN PANEL --- */
+        #login-container {
+            position: absolute; z-index: 10; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px); transition: all 0.6s ease;
+        }
+        .login-card {
+            width: 420px; padding: 40px; border-radius: 24px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 40px rgba(0,0,0,0.6); text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .login-card::before {
+            content:''; position: absolute; top:0; left:0; width:100%; height:4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary));
+        }
+
+        /* --- DASHBOARD --- */
+        #dashboard-container {
+            display: none; width: 96vw; height: 94vh;
+            background: var(--glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: 16px;
+            grid-template-rows: 60px 1fr; overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            opacity: 0; transform: scale(0.95); transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dash-header {
+            border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; background: rgba(0,0,0,0.3);
+        }
+        .logo-text { font-weight: 800; font-size: 1.3rem; letter-spacing: 1px; background: linear-gradient(to right, #fff, #aaa); -webkit-background-clip: text; color: transparent; }
+        
+        /* CONTENT GRID - 3 COLUMNS */
+        .dash-content { display: grid; grid-template-columns: 350px 1fr 320px; overflow: hidden; }
+        
+        .col { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
+        .col:last-child { border-right: none; }
+        
+        .col-header {
+            padding: 12px 15px; font-size: 0.75rem; font-weight: bold; letter-spacing: 1.2px;
+            color: var(--text-mute); text-transform: uppercase;
+            background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* --- SERVER LIST (LEFT) --- */
+        .search-box { padding: 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); }
+        .search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid #333; padding: 8px 10px; border-radius: 6px; color: white; outline:none; }
+        .search-input:focus { border-color: var(--accent); }
+
+        .list-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+        
+        .server-item {
+            background: rgba(255,255,255,0.02); border: 1px solid transparent;
+            border-radius: 8px; margin-bottom: 8px; transition: 0.2s; overflow: hidden;
+        }
+        .server-item:hover { border-color: rgba(255,255,255,0.2); }
+        .server-item.active { border-color: var(--accent); background: rgba(6, 182, 212, 0.05); }
+
+        .server-head {
+            padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer;
+        }
+        .svr-chk { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+        
+        /* CHANNEL PANEL */
+        .ch-panel { display: none; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); padding: 10px; }
+        .ch-panel.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0; transform:translateY(-5px);} to{opacity:1; transform:translateY(0);} }
+
+        .ch-actions { display: flex; gap: 5px; margin-bottom: 8px; }
+        .btn-xs {
+            flex: 1; font-size: 0.65rem; padding: 5px; border-radius: 4px; border: 1px solid var(--border);
+            background: transparent; color: #ccc; cursor: pointer; transition: 0.2s;
+        }
+        .btn-xs:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .ch-list { max-height: 200px; overflow-y: auto; }
+        .ch-row {
+            display: flex; align-items: center; gap: 8px; padding: 5px;
+            font-size: 0.8rem; color: #888; border-radius: 4px; cursor: pointer;
+        }
+        .ch-row:hover { background: rgba(255,255,255,0.08); color: white; }
+        .ch-row.highlight { color: var(--success); font-weight: 500; }
+        .ch-row.selected { background: rgba(16, 185, 129, 0.1); }
+
+        /* --- LANES (MIDDLE - GROUPS) --- */
+        .lanes-scroll {
+            flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px;
+        }
+        .group-card {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 10px; padding: 15px; position: relative;
+        }
+        .g-head { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+        .g-tag { font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+        
+        .tag-a { color: #8b5cf6; border: 1px solid #8b5cf6; }
+        .tag-b { color: #d946ef; border: 1px solid #d946ef; }
+        .tag-c { color: #06b6d4; border: 1px solid #06b6d4; }
+        .tag-d { color: #f59e0b; border: 1px solid #f59e0b; }
+
+        .msg-area {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+            color: #ddd; padding: 10px; border-radius: 6px; outline: none;
+            font-family: 'Outfit'; font-size: 0.85rem; resize: vertical; min-height: 60px;
+        }
+        .msg-area:focus { border-color: var(--accent); }
+
+        /* --- TERMINAL (RIGHT) --- */
+        .terminal {
+            flex: 1; background: #050505; padding: 15px; font-family: 'JetBrains Mono';
+            font-size: 0.75rem; overflow-y: auto; color: var(--success);
+        }
+        .log { margin-bottom: 4px; border-bottom: 1px dashed #1e293b; padding-bottom: 2px; }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        
+    </style>
+</head>
+<body>
+
+    <!-- GALAXY BACKGROUND -->
+    <div class="galaxy-bg" id="galaxy"></div>
+    <script>
+        // Generate Stars Dynamically
+        const bg = document.getElementById('galaxy');
+        for(let i=0; i<50; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', (Math.random() * 5 + 5) + 's');
+            bg.appendChild(star);
+        }
+    </script>
+
+    <!-- 1. LOGIN -->
+    <div id="login-container">
+        <div class="login-card">
+            <h1 style="margin-bottom:5px; background:linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip:text; color:transparent; font-size:2rem; font-weight:800;">THENEBARTRADERER</h1>
+            <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:25px;">Elite Discord Automation Panel</p>
+            
+            <div id="step-1">
+                <input type="text" id="keyInput" class="token-input" placeholder="LICENSE KEY (XXXX-XXXX)">
+                <button class="btn-glow" onclick="verify()">VALIDATE LICENSE</button>
+            </div>
+            <div id="step-2" style="display:none; animation: fadeIn 0.5s;">
+                <input type="password" id="tokenInput" class="token-input" placeholder="DISCORD TOKEN">
+                <button class="btn-glow" onclick="login()">INITIALIZE SYSTEM</button>
+            </div>
+            <p id="auth-msg" style="color:var(--danger); font-size:0.75rem; margin-top:10px; min-height:1rem;"></p>
+        </div>
+    </div>
+
+    <!-- 2. DASHBOARD -->
+    <div id="dashboard-container">
+        <!-- HEADER -->
+        <div class="dash-header">
+            <div class="logo-text">THENEBAR<span style="color:var(--primary)">TRADERER</span></div>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="text-align:right; line-height:1.2;">
+                    <div style="font-weight:bold; font-size:0.85rem; color:#fff;">NexusBot_V3</div>
+                    <div style="font-size:0.7rem; color:var(--success);">● Connected</div>
+                </div>
+                <button onclick="location.reload()" style="background:rgba(239,68,68,0.1); color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:6px; cursor:pointer;">EXIT</button>
+            </div>
+        </div>
+
+        <div class="dash-content">
+            
+            <!-- COLUMN 1: SERVERS -->
+            <div class="col">
+                <div class="col-header">
+                    <span>DETECTED SERVERS</span>
+                    <button onclick="collapseAll()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.7rem;">COLLAPSE ALL</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="srvSearch" class="search-input" placeholder="🔍 Search Server..." onkeyup="renderList()">
+                </div>
+                <div class="list-scroll" id="serverList"></div>
+            </div>
+
+            <!-- COLUMN 2: GROUPS (A, B, C, D) -->
+            <div class="col">
+                <div class="col-header">DISTRIBUTION CHANNELS</div>
+                <div class="lanes-scroll">
+                    
+                    <!-- GROUP TEMPLATE FUNCTION -->
+                    <script>
+                        const renderGroupHTML = (id, colorClass, title) => `
+                        <div class="group-card">
+                            <div class="g-head">
+                                <span class="g-tag ${colorClass}">${title}</span>
+                                <button onclick="addToGroup('${id}')" class="btn-xs" style="width:auto; padding:4px 10px;">+ Add Checked</button>
+                            </div>
+                            <div id="info-${id.toLowerCase()}" style="font-size:0.7rem; color:#64748b; margin-bottom:5px;">0 Channels Selected</div>
+                            <textarea id="msg-${id.toLowerCase()}" class="msg-area" placeholder="Type your message for ${title}..."></textarea>
+                        </div>`;
+                        document.write(renderGroupHTML('A', 'tag-a', 'GROUP A (Primary)'));
+                        document.write(renderGroupHTML('B', 'tag-b', 'GROUP B (Secondary)'));
+                        document.write(renderGroupHTML('C', 'tag-c', 'GROUP C (Tertiary)'));
+                        document.write(renderGroupHTML('D', 'tag-d', 'GROUP D (Quaternary)'));
+                    </script>
+
+                </div>
+            </div>
+
+            <!-- COLUMN 3: LOGS & CONTROL -->
+            <div class="col">
+                <div class="col-header">CONTROL CENTER</div>
+                <div style="padding:20px; border-bottom:1px solid var(--border);">
+                    <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); padding:10px; border-radius:6px; font-size:0.7rem; color:#fcd34d; margin-bottom:15px; display:flex; gap:10px; align-items:center;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span><b>SAFETY MODE:</b> Interval locked above 5s to prevent Discord API bans.</span>
+                    </div>
+                    
+                    <label style="font-size:0.75rem; color:#94a3b8; margin-bottom:5px; display:block;">INTERVAL DELAY (SECONDS)</label>
+                    <input type="number" id="interval" value="5" min="5" style="width:100%; background:#0f172a; border:1px solid #334155; padding:8px; border-radius:6px; color:white; margin-bottom:15px;">
+                    
+                    <button id="btnStart" class="btn-glow" onclick="toggleRun()">
+                        <i class="fa-solid fa-rocket"></i> START ENGINE
+                    </button>
+                </div>
+                <div class="col-header">REAL-TIME LOGS</div>
+                <div class="terminal" id="terminal">
+                    <div class="log">[SYSTEM] Ready to initialize...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        // --- STRICT CONFIGURATION ---
+        // STRICT WHITELIST: Hanya kata-kata ini yang dianggap TRADE
+        const TRADE_KEYS = ['trade', 'trading', 'wts', 'wtb', 'exchange'];
+        // STRICT BLACKLIST: Jika ada kata ini, JANGAN pilih (meskipun ada kata trade)
+        const BLACKLIST_KEYS = ['shop', 'market', 'store', 'jual', 'beli', 'discussion', 'chat', 'general'];
+
+        let servers = [];
+        let isRunning = false;
+        const GROUPS = ['A', 'B', 'C', 'D'];
+
+        // --- AUTH ---
+        async function verify() {
+            const k = document.getElementById('keyInput').value;
+            const msg = document.getElementById('auth-msg');
+            msg.innerText = "Verifying...";
+            try {
+                const r = await fetch('/api/verify_key', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k})});
+                const d = await r.json();
+                if(d.status === 'success') {
+                    document.getElementById('step-1').style.display='none';
+                    document.getElementById('step-2').style.display='block';
+                    msg.innerText = "";
+                } else msg.innerText = d.msg;
+            } catch { msg.innerText = "Connection Error"; }
+        }
+
+        async function login() {
+            const t = document.getElementById('tokenInput').value;
+            const msg = document.getElementById('auth-msg');
+            msg.innerText = "Connecting...";
+            try {
+                const r = await fetch('/api/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})});
+                const d = await r.json();
+                if(d.status === 'success') {
+                    // Init Servers
+                    servers = d.servers.map(s => ({
+                        id: s.id, name: s.name, group: null, 
+                        checked: false, expanded: false, channels: null, filter: ''
+                    }));
+                    
+                    document.getElementById('login-container').style.display='none';
+                    const db = document.getElementById('dashboard-container');
+                    db.style.display='grid';
+                    setTimeout(() => {
+                        db.style.opacity='1'; db.style.transform='scale(1)';
+                        renderList(); startLogLoop();
+                    }, 100);
+                } else msg.innerText = d.msg;
+            } catch { msg.innerText = "Connection Error"; }
+        }
+
+        // --- RENDER LOGIC ---
+        function renderList() {
+            const term = document.getElementById('srvSearch').value.toLowerCase();
+            const list = document.getElementById('serverList');
+            list.innerHTML = "";
+
+            servers.forEach(s => {
+                // Filter hanya server yang belum masuk grup & sesuai search
+                if(s.group !== null || !s.name.toLowerCase().includes(term)) return;
+
+                // Hitung channel terpilih
+                const selCount = s.channels ? s.channels.filter(c=>c.selected).length : 0;
+
+                const item = document.createElement('div');
+                item.className = `server-item ${s.checked ? 'active' : ''}`;
+                
+                // HEADER
+                item.innerHTML = `
+                    <div class="server-head" onclick="toggleExpand('${s.id}')">
+                        <input type="checkbox" class="svr-chk" ${s.checked?'checked':''} onclick="event.stopPropagation(); toggleCheck('${s.id}')">
+                        <div style="flex:1">
+                            <div style="font-weight:600; font-size:0.85rem;">${s.name}</div>
+                            <div style="font-size:0.7rem; color:${selCount>0 ? 'var(--success)':'#64748b'}">
+                                ${selCount > 0 ? selCount + ' Channels Selected' : 'Expand to select channels'}
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-${s.expanded?'up':'down'}" style="color:#64748b; font-size:0.7rem;"></i>
+                    </div>
+                    <div class="ch-panel ${s.expanded?'show':''}">
+                        <input type="text" class="search-input" style="padding:5px; font-size:0.75rem; margin-bottom:5px;" placeholder="Find channel..." value="${s.filter}" onkeyup="filterCh('${s.id}', this.value)">
+                        <div class="ch-actions">
+                            <button class="btn-xs" onclick="selectCh('${s.id}', 'trade')">TRADE ONLY</button>
+                            <button class="btn-xs" onclick="selectCh('${s.id}', 'all')">ALL</button>
+                            <button class="btn-xs" onclick="selectCh('${s.id}', 'none')">CLEAR</button>
+                        </div>
+                        <div class="ch-list" id="list-${s.id}">
+                            ${s.channels === null ? '<div style="color:#666; font-size:0.7rem; padding:5px;">Loading...</div>' : renderChannels(s)}
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+                if(s.expanded && s.channels === null) fetchChannels(s.id);
+            });
+            updateGroupInfo();
+        }
+
+        function renderChannels(s) {
+            return s.channels.filter(c => c.name.toLowerCase().includes(s.filter.toLowerCase())).map(c => {
+                // Highlight jika mengandung kata trade
+                const isTrade = TRADE_KEYS.some(k => c.name.toLowerCase().includes(k));
+                return `
+                    <div class="ch-row ${c.selected?'selected':''} ${isTrade?'highlight':''}" onclick="toggleChSel('${s.id}', '${c.id}')">
+                        <input type="checkbox" ${c.selected?'checked':''} style="pointer-events:none;">
+                        <span># ${c.name}</span>
+                        ${isTrade ? '<i class="fa-solid fa-star" style="margin-left:auto; font-size:0.6rem; color:var(--accent);"></i>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- ACTIONS ---
+        function toggleCheck(sid) { servers.find(s=>s.id===sid).checked = !servers.find(s=>s.id===sid).checked; renderList(); }
+        function toggleExpand(sid) { servers.find(s=>s.id===sid).expanded = !servers.find(s=>s.id===sid).expanded; renderList(); }
+        function collapseAll() { servers.forEach(s=>s.expanded=false); renderList(); }
+        
+        function filterCh(sid, val) {
+            const s = servers.find(s=>s.id===sid);
+            s.filter = val;
+            const el = document.getElementById(`list-${sid}`);
+            if(el) el.innerHTML = renderChannels(s);
+        }
+
+        async function fetchChannels(sid) {
+            const s = servers.find(s=>s.id===sid);
+            const r = await fetch('/api/get_channels', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({guild_id:sid})});
+            const d = await r.json();
+            s.channels = d.channels.map(c => ({ id:c.id, name:c.name, selected:false }));
+            // Auto Select Trade kalau belum ada yg dipilih
+            selectCh(sid, 'trade'); // Default trade only saat dibuka
+            renderList();
+        }
+
+        function selectCh(sid, mode) {
+            const s = servers.find(s=>s.id===sid);
+            if(!s.channels) return;
+            
+            s.channels.forEach(c => {
+                if(mode === 'all') c.selected = true;
+                if(mode === 'none') c.selected = false;
+                if(mode === 'trade') {
+                    const name = c.name.toLowerCase();
+                    // LOGIKA KETAT: Harus mengandung whitelist DAN TIDAK mengandung blacklist
+                    const hasTrade = TRADE_KEYS.some(k => name.includes(k));
+                    const hasBlacklist = BLACKLIST_KEYS.some(k => name.includes(k));
+                    
+                    c.selected = (hasTrade && !hasBlacklist);
+                }
+            });
+            renderList();
+        }
+
+        function toggleChSel(sid, cid) {
+            const s = servers.find(s=>s.id===sid);
+            const c = s.channels.find(c=>c.id===cid);
+            c.selected = !c.selected;
+            renderList();
+        }
+
+        function addToGroup(grp) {
+            const targets = servers.filter(s => s.checked && s.group === null);
+            if(targets.length === 0) return alert("Please check at least one server!");
+            
+            targets.forEach(s => {
+                s.group = grp; s.checked = false; s.expanded = false;
+                // Safety: Kalau user lupa pilih channel, pilih trade only sebagai default
+                if(s.channels) {
+                    if(!s.channels.some(c=>c.selected)) selectCh(s.id, 'trade');
+                }
+            });
+            renderList();
+        }
+
+        function updateGroupInfo() {
+            GROUPS.forEach(g => {
+                const srvs = servers.filter(s => s.group === g);
+                let chCount = 0;
+                srvs.forEach(s => { if(s.channels) chCount += s.channels.filter(c=>c.selected).length; });
+                document.getElementById(`info-${g.toLowerCase()}`).innerText = `${srvs.length} Servers (${chCount} Channels)`;
+            });
+        }
+
+        // --- ENGINE ---
+        async function toggleRun() {
+            const btn = document.getElementById('btnStart');
+            if(isRunning) {
+                await fetch('/api/stop', {method:'POST'});
+                isRunning = false; btn.innerHTML = '<i class="fa-solid fa-rocket"></i> START ENGINE'; btn.style.background = "";
+            } else {
+                const getPayload = (g) => {
+                    let chs = [];
+                    servers.filter(s=>s.group===g).forEach(s=>{
+                        if(s.channels) s.channels.filter(c=>c.selected).forEach(c=>chs.push({id:c.id, name:c.name}));
+                    });
+                    return { channels: chs, msg: document.getElementById(`msg-${g.toLowerCase()}`).value };
+                };
+
+                const payload = {
+                    interval: document.getElementById('interval').value,
+                    groups: {
+                        'A': getPayload('A'),
+                        'B': getPayload('B'),
+                        'C': getPayload('C'),
+                        'D': getPayload('D')
+                    }
+                };
+                
+                // Cek apakah ada channel yg dipilih sama sekali
+                const totalCh = payload.groups.A.channels.length + payload.groups.B.channels.length + payload.groups.C.channels.length + payload.groups.D.channels.length;
+                if(totalCh === 0) return alert("No channels selected in any group!");
+
+                await fetch('/api/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+                isRunning = true; btn.innerHTML = '<i class="fa-solid fa-stop"></i> STOP ENGINE'; btn.style.background = "var(--danger)";
+            }
+        }
+
+        function startLogLoop() {
+            setInterval(async () => {
+                try {
+                    const r = await fetch('/api/logs'); const l = await r.json();
+                    const t = document.getElementById('terminal'); t.innerHTML = "";
+                    l.forEach(x => {
+                        let color = '#fff';
+                        if(x.color==='success') color='var(--success)';
+                        if(x.color==='danger') color='var(--danger)';
+                        if(x.color==='warning') color='#f59e0b';
+                        t.innerHTML += `<div class="log"><span style="color:#555">[${x.time}]</span> <span style="color:${color}">${x.msg}</span></div>`;
+                    });
+                    t.scrollTop = t.scrollHeight;
+                } catch {}
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
